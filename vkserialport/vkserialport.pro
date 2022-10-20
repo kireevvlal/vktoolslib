@@ -14,18 +14,21 @@ SOURCES += \
     outputpacket.cpp \
     parameter.cpp \
     threadserialport.cpp \
-    treexml.cpp \
 
 HEADERS += \
     inputpacket.h \
     outputpacket.h \
     parameter.h \
     threadserialport.h \
-    treexml.h \
     vktoolstypes.h
+
+win32:INCLUDEPATH += D:/Development/Qt/vktoolslib
+win32:LIBS+=  D:/Development/Qt/vktoolslib/vktreexml.lib
+
 
 # Default rules for deployment.
 unix {
     target.path = $$[QT_INSTALL_PLUGINS]/generic
 }
 !isEmpty(target.path): INSTALLS += target
+
