@@ -33,12 +33,21 @@ void OutputPacket::Parse(NodeXML* node)
     // Init Data
     _data.resize(_length - 1);
     _data.fill(0);
-    for (i = 0; i < _parameters.size(); i++)
-        _data[_parameters[i]->Byte] = _parameters[i]->Value;
+//    for (i = 0; i < _parameters.size(); i++)
+//        _data[_parameters[i]->Byte] = _parameters[i]->Value;
+}
+//--------------------------------------------------------------------------------
+void OutputPacket::SetByteParameter(QString var, qint8 val)
+{
+    for (int i = 0; i < _parameters.size(); i++)
+        if (_parameters[i]->Variable == var)
+                _parameters[i]->Value = val;
 }
 //--------------------------------------------------------------------------------
 QByteArray OutputPacket::Build() //Build()
 {
+    for (int i = 0; i < _parameters.size(); i++)
+        _data[_parameters[i]->Byte] = _parameters[i]->Value;
     return (this->*BuildFunction)();
 }
 

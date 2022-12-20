@@ -40,6 +40,7 @@ public:
     void Parse(NodeXML*);
     ParameterList Parameters();
     QByteArray Data();
+    void Reset(); // clear data bytes
     void Decode(QByteArray);
     void Swap();
     void SetProtocol(ProtocolType);

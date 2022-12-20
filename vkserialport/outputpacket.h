@@ -14,6 +14,7 @@ public:
     void SetProtocol(ProtocolType);
     ParameterList Parameters();
     void SetData(int, int, QByteArray);
+    void SetByteParameter(QString, qint8);
 private:
     ParameterList _parameters;
      QByteArray _data;

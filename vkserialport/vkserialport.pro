@@ -23,7 +23,10 @@ HEADERS += \
     vktoolstypes.h
 
 win32:INCLUDEPATH += D:/Development/Qt/vktoolslib
+unix:INCLUDEPATH += /home/user/sai/develop/vktoolslib
+
 win32:LIBS+=  D:/Development/Qt/vktoolslib/vktreexml.lib
+unix:LIBS += -L/home/user/sai/build-vktoolslib-Desktop_Qt_5_7_1_GCC_64bit-Debug -lvktoolslib
 
 
 # Default rules for deployment.

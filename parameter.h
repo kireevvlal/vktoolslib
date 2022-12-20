@@ -18,6 +18,7 @@ public:
     int Value;
     int Index;
     float Coefficient;
+    int Offset;
 };
 
 class ParameterList : public QVector<Parameter*> {

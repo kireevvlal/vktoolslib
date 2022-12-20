@@ -118,6 +118,7 @@ void ThreadSerialPort::TimerStep()
     if (_watchdog > _limit) {
         if (_is_exchange) {
             _is_exchange = false;
+            InData.Reset();
             LostExchangeSignal(Alias);
         }
         _watchdog = _limit; //
@@ -174,6 +175,8 @@ void ThreadSerialPort::Parse(NodeXML* node) {
         }
         else if (attr->Name == "delay")
             _delay = attr->Value.toInt();
+        else if (attr->Name == "limit")
+            _limit = attr->Value.toInt();
         else if (attr->Name == "protocol") {
             value = attr->Value.toLower();
             _type_protocol = (value == "staffing") ? ProtocolType::Staffing : ProtocolType::Unknown;

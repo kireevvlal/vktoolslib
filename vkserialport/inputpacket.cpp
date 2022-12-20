@@ -120,14 +120,22 @@ QByteArray InputPacket::Data() {
 }
 //--------------------------------------------------------------------------------
 void InputPacket::Swap() {
-    int i, tmp;
+    int i, tmp, byte;
     if (_order == OrderType::Reverse)
         for (i = 0; i < _parameters.count(); i++) {
             if (_parameters[i]->Type == DataType::Float || _parameters[i]->Type == DataType::Int16 ||
-                    _parameters[i]->Type == DataType::Uint16) {
-                tmp = _data[_parameters[i]->Byte];
-                _data[_parameters[i]->Byte] = _data[_parameters[i]->Byte + 1];
-                _data[_parameters[i]->Byte + 1] = tmp;
+                    _parameters[i]->Type == DataType::Uint16)  {
+                byte = _parameters[i]->Byte;
+                if (byte + _parameters[i]->Size <= _data.size() )
+                {
+                    tmp = _data[byte];
+                    _data[byte] = _data[byte + 1];
+                    _data[byte + 1] = tmp;
+                }
             }
         }
+}
+//--------------------------------------------------------------------------------
+void InputPacket::Reset() {
+    _data.fill('\0');
 }
