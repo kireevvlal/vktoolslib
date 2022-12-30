@@ -27,9 +27,10 @@ public:
     bool Add(QString, Parameter*);
     void Normalize(Parameter*, QByteArray);
     void LoadSpData(ThreadSerialPort*);
+    void ClearSpData(ThreadSerialPort*);
     // get value
     bool Bit(QString key, int index) { return _bits_map.contains(key) ? _bits_map[key]->testBit(index) : false; }
-    QBitArray* Bits(QString key) { return _bits_map.contains(key) ? _bits_map[key] : false; }
+    QBitArray* Bits(QString key) { return _bits_map.contains(key) ? _bits_map[key] : 0; }
     qint8 Byte(QString key) { return _bytes_map.contains(key) ? _bytes_map[key] : 0; }
     quint8 UByte(QString key) { return _ubytes_map.contains(key) ? _ubytes_map[key] : 0; }
     qint16 Int16(QString key) { return _int16_map.contains(key) ? _int16_map[key] : 0; }

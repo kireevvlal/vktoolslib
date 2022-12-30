@@ -13,8 +13,8 @@ ThreadSerialPort::ThreadSerialPort(QObject *parent)
     _type_exchange = ExchangeType::Receive;
     _delay = 1000;
     _limit = 3000;
-    _wait = _watchdog = 0;
-    _is_exchange = false;
+    _wait = _watchdog = _wd_bytes = 0;
+    _is_exchange = _is_bytes = false;
     _counter = 0;
     _quality = 0;
 }
@@ -115,15 +115,21 @@ void ThreadSerialPort::TimerStep()
     } else
         _wait += TIMEOUT;
     _watchdog += TIMEOUT;
+    _wd_bytes += TIMEOUT;
     if (_watchdog > _limit) {
         if (_is_exchange) {
             _is_exchange = false;
-            InData.Reset();
+//            InData.Reset();
             LostExchangeSignal(Alias);
         }
         _watchdog = _limit; //
     }
-
+    if (_wd_bytes > _limit) {
+        if (_is_bytes) {
+            _is_bytes = false;
+        }
+        _wd_bytes = _limit; //
+    }
 }
 //--------------------------------------------------------------------------------
 // Запись данных в порт
@@ -139,13 +145,18 @@ void ThreadSerialPort::Write()
 // Чтение данных из порта
 void ThreadSerialPort::Read()
 {
-    if (_type_protocol != ProtocolType::Unknown) {
-        InData.Decode(readAll());
-    } else {
-        QByteArray data;
-        data.append(readAll());
-        ReadSignal(data);
+    QByteArray data = readAll();
+    if (data.size() > 0) {
+        if (_type_protocol != ProtocolType::Unknown) {
+            InData.Decode(data);
+        } else {
+            ReadSignal(data);
+        }
     }
+    if (!_is_bytes) {
+        _is_bytes = true;
+    }
+    _wd_bytes = _timer.remainingTime();
 }
 //--------------------------------------------------------------------------------
 // Чтение данных из порта

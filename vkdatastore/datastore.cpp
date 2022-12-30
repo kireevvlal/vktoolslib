@@ -204,6 +204,53 @@ QStringList DataStore::OutMaps()
     return strings;
 }
 //--------------------------------------------------------------------------------
+void DataStore::ClearSpData(ThreadSerialPort *port) {
+    ParameterList parameters = port->InData.Parameters();
+    Parameter *current;
+
+    for (int i = 0; i < parameters.size(); i++) {
+        current = parameters[i];
+        switch(parameters[i]->Type) {
+        case DataType::Bits:
+            if (_bits_map.contains(current->Variable))
+                for (int j = 0; j < current->Size; j++)
+                    for (int k = 0; k < 8; k++)
+                        _bits_map[current->Variable]->setBit(j * 8 + k, 0);
+            break;
+        case DataType::Byte:
+            if (_bytes_map.contains(current->Variable))
+                _bytes_map[current->Variable] = 0;
+            break;
+        case DataType::UByte:
+            if (_ubytes_map.contains(current->Variable))
+                _ubytes_map[current->Variable] = 0;
+            break;
+        case DataType::Int16:
+            if (_int16_map.contains(current->Variable))
+                _int16_map[current->Variable] = 0;
+            break;
+        case DataType::Uint16:
+            if (_uint16_map.contains(current->Variable))
+                _uint16_map[current->Variable] = 0;
+            break;
+        case DataType::Int32:
+            if (_int32_map.contains(current->Variable))
+                _int32_map[current->Variable] = 0;
+            break;
+        case DataType::Uint32:
+            if (_uint32_map.contains(current->Variable))
+                _uint32_map[current->Variable] = 0;
+            break;
+        case DataType::Float:
+            if (_float_map.contains(current->Variable))
+                _float_map[current->Variable] = 0;
+            break;
+        case DataType::Double:
+            break;
+        }
+    }
+}
+//--------------------------------------------------------------------------------
 void DataStore::LoadSpData(ThreadSerialPort *port) {
     ParameterList parameters = port->InData.Parameters();
     Parameter *current;

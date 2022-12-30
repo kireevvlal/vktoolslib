@@ -136,6 +136,6 @@ void InputPacket::Swap() {
         }
 }
 //--------------------------------------------------------------------------------
-void InputPacket::Reset() {
-    _data.fill('\0');
-}
+//void InputPacket::Reset() {
+//    _data.fill('\0');
+//}

@@ -27,6 +27,7 @@ public:
     bool Add(QString, Parameter*);
     void Normalize(Parameter*, QByteArray);
     void LoadSpData(ThreadSerialPort*);
+    void ClearSpData(ThreadSerialPort*);
     // get value
     bool Bit(QString key, int index) { return _bits_map.contains(key) ? _bits_map[key]->testBit(index) : false; }
     QBitArray* Bits(QString key) { return _bits_map.contains(key) ? _bits_map[key] : 0; }

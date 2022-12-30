@@ -28,11 +28,13 @@ public:
     ~ThreadSerialPort();
     QString Alias;
     bool IsExchange() { return _is_exchange; }
+    bool IsBytes() { return _is_bytes; }
     int Quality() { return _quality; }
     void Parse(NodeXML*);           // разбор ветви дерава XML с параметрами объекта
     void WriteSettings(QString, int, int, int, int, int);
 private:
-    bool _is_exchange;          // наличие приема данных за заданный интервал
+    bool _is_exchange;          // наличие приема декодированных пакетов за заданный интервал
+    bool _is_bytes;              // наличие приема данных за заданный интервал
     int _quality;
     QTimer _timer;
     //QSerialPort *_port;
@@ -42,8 +44,9 @@ private:
     ProtocolType _type_protocol; // тип протокола: Staffing - со стафинг-байтом
     int _delay;              // Интервал в мс между посылаемыми пакетами (для Master и Async)
     int _limit;              // Интервал в мс, после которого связь считается утерянной
-    int _wait;               // Накапливаемое время ожидания между пакетами
+    int _wait;               // Накапливаемое время ожидания между передачей пакетов
     int _watchdog;           // Накапливаемое время наличия прихода пакетов
+    int _wd_bytes;            // Накапливаемое время наличия прихода посылок (байтов, без анализа пакетов)
     int _counter;
     bool Connect();         // Сроединение по последовательному порту
     void ParsePort(NodeXML*);
