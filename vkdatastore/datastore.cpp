@@ -6,6 +6,17 @@ DataStore::DataStore()
 
 }
 //--------------------------------------------------------------------------------
+void DataStore::ErrorHandling(QString key, DataType type, OperationType operation) {
+    QMap <DataType, OperationType> item;
+    if (_errors.contains(key)) {
+        if (!_errors[key].contains(type))
+            _errors[key].insert(type, operation);
+    } else { // new
+        _errors.insert(key, QMap <DataType, OperationType>());
+        _errors[key].insert(type, operation);
+    }
+}
+//--------------------------------------------------------------------------------
 void DataStore::FillMaps(ThreadSerialPort* port) {
     int j;
     ParameterList parameters;
@@ -86,76 +97,234 @@ bool DataStore::Add(QString key, Parameter* param) {
     }
 }
 //--------------------------------------------------------------------------------
+quint8 DataStore::BitArrayToByte(QString key) {
+    quint8 byte = 0;
+    if (_bits_map.contains(key)) {
+        for (int i = 0; i < _bits_map[key]->size() && i < 8; i++)
+                byte +=  _bits_map[key]->testBit(i) ? (1 << i) : 0;
+    } else
+        ErrorHandling(key, DataType::Bits, OperationType::Read);
+    return byte;
+}
+//--------------------------------------------------------------------------------
+QByteArray DataStore::BitArrayToByteArray(QString key) {
+    QByteArray array;
+    quint8 byte;
+    if (_bits_map.contains(key)) {
+        for (int j = 0; j <  _bits_map[key]->size() / 8; j++)  {
+            byte = 0;
+            for (int i = 0; i < 8 && i + j * 8 < _bits_map[key]->size(); i++)
+                byte +=  _bits_map[key]->testBit(j) ? (1 << j) : 0;
+            array.append(byte);
+        }
+    } else
+        ErrorHandling(key, DataType::Bits, OperationType::Read);
+    return array;
+}
+//--------------------------------------------------------------------------------
+bool DataStore::Bit(QString key, int index) {
+    if (_bits_map.contains(key))
+        return _bits_map[key]->testBit(index);
+    else {
+        ErrorHandling(key, DataType::Bits, OperationType::Read);
+        return false;
+    }
+}
+//--------------------------------------------------------------------------------
+QBitArray* DataStore::Bits(QString key) {
+    if (_bits_map.contains(key))
+        return _bits_map[key];
+    else {
+        ErrorHandling(key, DataType::Bits, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+qint8 DataStore::Byte(QString key) {
+    if (_bytes_map.contains(key))
+        return _bytes_map[key];
+    else {
+        ErrorHandling(key, DataType::Byte, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+quint8 DataStore::UByte(QString key) {
+    if (_ubytes_map.contains(key))
+        return _ubytes_map[key];
+    else {
+        ErrorHandling(key, DataType::UByte, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+qint16 DataStore::Int16(QString key) {
+    if (_int16_map.contains(key))
+        return _int16_map[key];
+    else {
+        ErrorHandling(key, DataType::Int16, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+quint16 DataStore::UInt16(QString key) {
+    if (_uint16_map.contains(key))
+        return _uint16_map[key];
+    else {
+        ErrorHandling(key, DataType::Uint16, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+qint32 DataStore::Int32(QString key) {
+    if (_int32_map.contains(key))
+        return _int32_map[key];
+    else {
+        ErrorHandling(key, DataType::Int32, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+quint32 DataStore::UInt32(QString key) {
+    if (_uint32_map.contains(key))
+        return _uint32_map[key];
+    else {
+        ErrorHandling(key, DataType::Uint32, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+float DataStore::Float(QString key) {
+    if (_float_map.contains(key))
+        return _float_map[key];
+    else {
+        ErrorHandling(key, DataType::Float, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
+float DataStore::Double(QString key) {
+    if (_double_map.contains(key))
+        return _double_map[key];
+    else {
+        ErrorHandling(key, DataType::Double, OperationType::Read);
+        return 0;
+    }
+}
+//--------------------------------------------------------------------------------
 bool DataStore::SetBit(QString key, int index, bool value) {
     if (_bits_map.contains(key)) {
         _bits_map[key]->setBit(index, value);
         return true;
     }
-    else
+    else {
+        ErrorHandling(key, DataType::Bits, OperationType::Write);
         return false;
+    }
+}
+//--------------------------------------------------------------------------------
+bool DataStore::SetBitArray(QString key, quint8 value) {
+    if (_bits_map.contains(key)) {
+        for (int i = 0; i < _bits_map[key]->size() && i < 8; i++)
+            _bits_map[key]->setBit(i, value & (1 << i));
+        return true;
+    }
+    else {
+        ErrorHandling(key, DataType::Bits, OperationType::Write);
+        return false;
+    }
+}
+//--------------------------------------------------------------------------------
+bool DataStore::SetBitArray(QString key, QByteArray value) {
+    if (_bits_map.contains(key)) {
+        for (int j = 0; j < value.size() && j * 8 < _bits_map[key]->size(); j++)
+            for (int i = 0; i < 8 && i + j * 8 < _bits_map[key]->size(); i++)
+                _bits_map[key]->setBit(j * 8 + i, value[j] & (1 << i));
+        return true;
+    } else {
+        ErrorHandling(key, DataType::Bits, OperationType::Write);
+        return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetByte(QString key, qint8 value) {
     if (_bytes_map.contains(key)) {
         _bytes_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::Byte, OperationType::Write);
         return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetUByte(QString key, quint8 value) {
     if (_ubytes_map.contains(key)) {
         _ubytes_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::UByte, OperationType::Write);
         return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetInt16(QString key, qint16 value) {
     if (_int16_map.contains(key)) {
         _int16_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::Int16, OperationType::Write);
         return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetUInt16(QString key, quint16 value) {
     if (_uint16_map.contains(key)) {
         _uint16_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::Uint16, OperationType::Write);
         return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetInt32(QString key, qint32 value) {
     if (_int32_map.contains(key)) {
         _int32_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::Int32, OperationType::Write);
         return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetUInt32(QString key, quint32 value) {
     if (_uint32_map.contains(key)) {
         _uint32_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::Uint32, OperationType::Write);
         return false;
+    }
 }
 //--------------------------------------------------------------------------------
 bool DataStore::SetFloat(QString key, float value) {
     if (_float_map.contains(key)) {
         _float_map[key] = value;
         return true;
-    }
-    else
+    } else {
+        ErrorHandling(key, DataType::Float, OperationType::Write);
         return false;
+    }
+}
+//--------------------------------------------------------------------------------
+bool DataStore::SetDouble(QString key, double value) {
+    if (_double_map.contains(key)) {
+        _double_map[key] = value;
+        return true;
+    } else {
+        ErrorHandling(key, DataType::Double, OperationType::Write);
+        return false;
+    }
 }
 //--------------------------------------------------------------------------------
 QStringList DataStore::OutMaps()

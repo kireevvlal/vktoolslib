@@ -2,7 +2,6 @@
 
 ThreadSerialPort::ThreadSerialPort(QObject *parent)
 {
-    _thread = new QThread;
     Alias = "";
     _settings.Name = "";
     _settings.BaudRate = 9600;
@@ -23,10 +22,8 @@ ThreadSerialPort::~ThreadSerialPort()
 {
     if (isOpen())
         close();
-//    delete _port;
-    if (_thread->isRunning())
-        _thread->quit();
-    delete _thread;
+    if (_thread.isRunning())
+        _thread.quit();
     emit FinishedSignal();  //Сигнал о завершении работы
 }
 //--------------------------------------------------------------------------------
@@ -74,16 +71,16 @@ void  ThreadSerialPort::Disconnect()
 //--------------------------------------------------------------------------------
 void ThreadSerialPort::Start()
 {
-    moveToThread(_thread);
-    connect(_thread, SIGNAL(started()), this, SLOT(Process()));  //Переназначения метода run
-    connect(this, SIGNAL(FinishedSignal()), _thread, SLOT(quit()));//Переназначение метода выход
-    connect(_thread, SIGNAL(finished()), this, SLOT(deleteLater()));//Удалить к чертям поток
-    connect(this, SIGNAL(FinishedSignal()), _thread, SLOT(deleteLater()));//Удалить к чертям поток
+    moveToThread(&_thread);
+    connect(&_thread, SIGNAL(started()), this, SLOT(Process()));  //Переназначения метода run
+    connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(quit()));//Переназначение метода выход
+//    connect(&_thread, SIGNAL(finished()), this, SLOT(deleteLater()));//Удалить к чертям поток
+//    connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(deleteLater()));//Удалить к чертям поток
 
     if (Connect()) {
         connect(&_timer, SIGNAL(timeout()), this, SLOT(TimerStep()));
         _timer.start(TIMEOUT);
-        _thread->start();
+        _thread.start();
     }
 }
 //--------------------------------------------------------------------------------
@@ -135,8 +132,8 @@ void ThreadSerialPort::TimerStep()
 // Запись данных в порт
 void ThreadSerialPort::Write()
 {
-    if (isOpen()){
-        QByteArray out = OutData.Build();
+    QByteArray out = OutData.Build();
+    if (isOpen()){        
         write(out);
         WriteSignal(Alias);
     }
@@ -145,7 +142,9 @@ void ThreadSerialPort::Write()
 // Чтение данных из порта
 void ThreadSerialPort::Read()
 {
-    QByteArray data = readAll();
+    QByteArray data;
+    if (isOpen())
+        data = readAll();
     if (data.size() > 0) {
         if (_type_protocol != ProtocolType::Unknown) {
             InData.Decode(data);

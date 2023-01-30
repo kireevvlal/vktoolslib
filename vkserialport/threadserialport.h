@@ -39,7 +39,7 @@ private:
     QTimer _timer;
     //QSerialPort *_port;
     SerialPortSettings _settings;
-    QThread *_thread;
+    QThread _thread;
     ExchangeType _type_exchange; // тип обмена: master - ведущий, slave - ведомый, async - асинхронный
     ProtocolType _type_protocol; // тип протокола: Staffing - со стафинг-байтом
     int _delay;              // Интервал в мс между посылаемыми пакетами (для Master и Async)

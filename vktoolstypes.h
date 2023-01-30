@@ -17,6 +17,7 @@ enum OrderType { Direct, Reverse };
 enum ProtocolType { Staffing, Unknown };
 enum DataType { Bits, Byte, UByte, Int16, Uint16, Int32, Uint32, Float, Double };
 enum RegistrationType { Record,  Bulk, Archive};
+enum OperationType { Read, Write };
 
 typedef  union {
     qint16 Value;
