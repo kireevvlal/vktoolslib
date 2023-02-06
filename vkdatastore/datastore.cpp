@@ -6,6 +6,21 @@ DataStore::DataStore()
 
 }
 //--------------------------------------------------------------------------------
+QStringList DataStore::Errors() {
+    QStringList result;
+    QString type;
+     for (QMap<QString, QMap<DataType, OperationType>>::iterator i = _errors.begin(); i != _errors.end(); i++) {
+         for (QMap<DataType, OperationType>::iterator j = i.value().begin(); j != i.value().end(); j++) {
+             type = (j.key() == DataType::Bits) ? "bits" : ((j.key() == DataType::Byte) ? "byte" : ((j.key() == DataType::UByte) ? "ubyte" :
+                    ((j.key() == DataType::Int16) ? "int16": ((j.key() == DataType::Uint16) ? "uint16" :
+                    ((j.key() == DataType::Int32) ? "int32": ((j.key() == DataType::Uint32) ? "uint32" :
+                    ((j.key() == DataType::Float) ? "float": ((j.key() == DataType::Double) ? "double" : "unknown"))))))));
+             result.append(i.key() + ", type: " + type + ", operation: " + ((j.value() == OperationType::Read) ? "read" : "write"));
+         }
+     }
+     return result;
+}
+//--------------------------------------------------------------------------------
 void DataStore::ErrorHandling(QString key, DataType type, OperationType operation) {
     QMap <DataType, OperationType> item;
     if (_errors.contains(key)) {

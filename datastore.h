@@ -22,6 +22,7 @@ private:
     QMap<QString, QMap<DataType, OperationType>> _errors;
 public:
     DataStore();
+    QStringList Errors();
     // maps methods
     void FillMaps(ThreadSerialPort*);
     QStringList OutMaps();

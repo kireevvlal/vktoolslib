@@ -27,6 +27,8 @@ public:
     explicit ThreadSerialPort(QObject *parent = nullptr);
     ~ThreadSerialPort();
     QString Alias;
+    bool ThreadRunning() { return _thread.isRunning(); }
+    quint32 ErrorsCount() { return _errors_count; }
     bool IsExchange() { return _is_exchange; }
     bool IsBytes() { return _is_bytes; }
     int Quality() { return _quality; }
@@ -34,8 +36,9 @@ public:
     void WriteSettings(QString, int, int, int, int, int);
 private:
     bool _is_exchange;          // наличие приема декодированных пакетов за заданный интервал
-    bool _is_bytes;              // наличие приема данных за заданный интервал
-    int _quality;
+    bool _is_bytes;             // наличие приема данных за заданный интервал
+    int _quality;               // качество связи
+    quint32 _errors_count;          // количество ошибок порта
     QTimer _timer;
     //QSerialPort *_port;
     SerialPortSettings _settings;

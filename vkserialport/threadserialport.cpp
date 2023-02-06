@@ -16,6 +16,7 @@ ThreadSerialPort::ThreadSerialPort(QObject *parent)
     _is_exchange = _is_bytes = false;
     _counter = 0;
     _quality = 0;
+    _errors_count = 0;
 }
 //--------------------------------------------------------------------------------
 ThreadSerialPort::~ThreadSerialPort()
@@ -40,7 +41,7 @@ bool ThreadSerialPort::Connect()
             LogSignal(_settings.Name + " открыт!\r");
             return true;
         } else {
-            close();
+//            close();
             LogSignal(errorString().toLocal8Bit());
         }
     } else {
@@ -74,8 +75,8 @@ void ThreadSerialPort::Start()
     moveToThread(&_thread);
     connect(&_thread, SIGNAL(started()), this, SLOT(Process()));  //Переназначения метода run
     connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(quit()));//Переназначение метода выход
-//    connect(&_thread, SIGNAL(finished()), this, SLOT(deleteLater()));//Удалить к чертям поток
-//    connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(deleteLater()));//Удалить к чертям поток
+     //    connect(&_thread, SIGNAL(finished()), this, SLOT(deleteLater()));//Удалить к чертям поток
+     //    connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(deleteLater()));//Удалить к чертям поток
 
     if (Connect()) {
         connect(&_timer, SIGNAL(timeout()), this, SLOT(TimerStep()));
@@ -95,6 +96,7 @@ void ThreadSerialPort::Process()
 //проверка ошибок при работе
 void ThreadSerialPort::HandleError(QSerialPort::SerialPortError error)
 {
+    _errors_count++;
     if ((isOpen()) && (error == QSerialPort::ResourceError)) {
         LogSignal(errorString().toLocal8Bit());
         Disconnect();
@@ -146,7 +148,7 @@ void ThreadSerialPort::Read()
     if (isOpen())
         data = readAll();
     if (data.size() > 0) {
-        if (_type_protocol != ProtocolType::Unknown) {
+        if (_type_protocol != ProtocolType::UndeterminedProtocol) {
             InData.Decode(data);
         } else {
             ReadSignal(data);
@@ -158,7 +160,7 @@ void ThreadSerialPort::Read()
     _wd_bytes = _timer.remainingTime();
 }
 //--------------------------------------------------------------------------------
-// Чтение данных из порта
+// Пакет успешно принят
 void ThreadSerialPort::ReceivePacket() {
     if (!_is_exchange) {
         _is_exchange = true;
@@ -189,7 +191,7 @@ void ThreadSerialPort::Parse(NodeXML* node) {
             _limit = attr->Value.toInt();
         else if (attr->Name == "protocol") {
             value = attr->Value.toLower();
-            _type_protocol = (value == "staffing") ? ProtocolType::Staffing : ProtocolType::Unknown;
+            _type_protocol = (value == "staffing") ? ProtocolType::Staffing : ProtocolType::UndeterminedProtocol;
         }
     }
     if (node->Child != nullptr) {
