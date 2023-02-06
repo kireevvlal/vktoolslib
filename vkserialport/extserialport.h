@@ -1,5 +1,5 @@
-#ifndef THREADSERIALPORT_H
-#define THREADSERIALPORT_H
+#ifndef EXTSERIALPORT_H
+#define EXTSERIALPORT_H
 #include <QThread>
 #include <QtSerialPort/QSerialPort>
 #include <QTimer>
@@ -18,14 +18,14 @@ struct SerialPortSettings { //Структура с настройками по�
     QSerialPort::FlowControl FlowControl;
  };
 
-class ThreadSerialPort : public QSerialPort
+class ExtSerialPort : public QSerialPort
 {
     Q_OBJECT
 public:
     OutputPacket OutData;
     InputPacket InData;
-    explicit ThreadSerialPort(QObject *parent = nullptr);
-    ~ThreadSerialPort();
+    explicit ExtSerialPort(QObject *parent = nullptr);
+    ~ExtSerialPort();
     QString Alias;
     bool ThreadRunning() { return _thread.isRunning(); }
     quint32 ErrorsCount() { return _errors_count; }
@@ -73,4 +73,4 @@ private slots:
     void ReceivePacket();
 };
 
-#endif // THREADSERIALPORT_H
+#endif // EXTSERIALPORT_H

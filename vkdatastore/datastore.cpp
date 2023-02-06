@@ -32,7 +32,7 @@ void DataStore::ErrorHandling(QString key, DataType type, OperationType operatio
     }
 }
 //--------------------------------------------------------------------------------
-void DataStore::FillMaps(ThreadSerialPort* port) {
+void DataStore::FillMaps(ExtSerialPort* port) {
     int j;
     ParameterList parameters;
     Parameter *current;
@@ -388,7 +388,7 @@ QStringList DataStore::OutMaps()
     return strings;
 }
 //--------------------------------------------------------------------------------
-void DataStore::ClearSpData(ThreadSerialPort *port) {
+void DataStore::ClearSpData(ExtSerialPort *port) {
     ParameterList parameters = port->InData.Parameters();
     Parameter *current;
 
@@ -435,7 +435,7 @@ void DataStore::ClearSpData(ThreadSerialPort *port) {
     }
 }
 //--------------------------------------------------------------------------------
-void DataStore::LoadSpData(ThreadSerialPort *port) {
+void DataStore::LoadSpData(ExtSerialPort *port) {
     ParameterList parameters = port->InData.Parameters();
     Parameter *current;
     QByteArray data = port->InData.Data();

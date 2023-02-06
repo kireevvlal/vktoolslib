@@ -10,16 +10,16 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    extserialport.cpp \
     inputpacket.cpp \
     outputpacket.cpp \
     parameter.cpp \
-    threadserialport.cpp \
 
 HEADERS += \
+    extserialport.h \
     inputpacket.h \
     outputpacket.h \
     parameter.h \
-    threadserialport.h \
     vktoolstypes.h
 
 win32:INCLUDEPATH += D:/Development/Qt/vktoolslib

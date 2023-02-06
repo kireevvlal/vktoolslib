@@ -1,6 +1,6 @@
-#include "threadserialport.h"
+#include "extserialport.h"
 
-ThreadSerialPort::ThreadSerialPort(QObject *parent)
+ExtSerialPort::ExtSerialPort(QObject *parent)
 {
     Alias = "";
     _settings.Name = "";
@@ -19,7 +19,7 @@ ThreadSerialPort::ThreadSerialPort(QObject *parent)
     _errors_count = 0;
 }
 //--------------------------------------------------------------------------------
-ThreadSerialPort::~ThreadSerialPort()
+ExtSerialPort::~ExtSerialPort()
 {
     if (isOpen())
         close();
@@ -28,7 +28,7 @@ ThreadSerialPort::~ThreadSerialPort()
     emit FinishedSignal();  //Сигнал о завершении работы
 }
 //--------------------------------------------------------------------------------
-bool ThreadSerialPort::Connect()
+bool ExtSerialPort::Connect()
 {
     setPortName(_settings.Name);
     if (setBaudRate(_settings.BaudRate)
@@ -51,7 +51,7 @@ bool ThreadSerialPort::Connect()
     return false;
 }
 //--------------------------------------------------------------------------------
-void ThreadSerialPort::WriteSettings(QString name, int baudrate,int databits, int parity, int stopbits, int flowcontrol)
+void ExtSerialPort::WriteSettings(QString name, int baudrate,int databits, int parity, int stopbits, int flowcontrol)
 {
     _settings.Name = name;
     _settings.BaudRate = baudrate;
@@ -62,7 +62,7 @@ void ThreadSerialPort::WriteSettings(QString name, int baudrate,int databits, in
 }
 //--------------------------------------------------------------------------------
 // Отключаем порт
-void  ThreadSerialPort::Disconnect()
+void  ExtSerialPort::Disconnect()
 {
     if (isOpen()){
         close();
@@ -70,7 +70,7 @@ void  ThreadSerialPort::Disconnect()
     }
 }
 //--------------------------------------------------------------------------------
-void ThreadSerialPort::Start()
+void ExtSerialPort::Start()
 {
     moveToThread(&_thread);
     connect(&_thread, SIGNAL(started()), this, SLOT(Process()));  //Переназначения метода run
@@ -86,7 +86,7 @@ void ThreadSerialPort::Start()
 }
 //--------------------------------------------------------------------------------
 // Выполняется при старте класса
-void ThreadSerialPort::Process()
+void ExtSerialPort::Process()
 {
     connect(this, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(HandleError(QSerialPort::SerialPortError))); // подключаем проверку ошибок порта
     connect(this, SIGNAL(readyRead()), this, SLOT(Read()));//подключаем   чтение с порта по сигналу readyRead()
@@ -94,7 +94,7 @@ void ThreadSerialPort::Process()
 }
 //--------------------------------------------------------------------------------
 //проверка ошибок при работе
-void ThreadSerialPort::HandleError(QSerialPort::SerialPortError error)
+void ExtSerialPort::HandleError(QSerialPort::SerialPortError error)
 {
     _errors_count++;
     if ((isOpen()) && (error == QSerialPort::ResourceError)) {
@@ -104,7 +104,7 @@ void ThreadSerialPort::HandleError(QSerialPort::SerialPortError error)
 }
 //--------------------------------------------------------------------------------
 // Обработка сигнала таймера передачи пакетов
-void ThreadSerialPort::TimerStep()
+void ExtSerialPort::TimerStep()
 {
     if (_wait + TIMEOUT >= _delay) {
         if (_type_exchange == ExchangeType::Master)
@@ -132,7 +132,7 @@ void ThreadSerialPort::TimerStep()
 }
 //--------------------------------------------------------------------------------
 // Запись данных в порт
-void ThreadSerialPort::Write()
+void ExtSerialPort::Write()
 {
     QByteArray out = OutData.Build();
     if (isOpen()){        
@@ -142,7 +142,7 @@ void ThreadSerialPort::Write()
 }
 //--------------------------------------------------------------------------------
 // Чтение данных из порта
-void ThreadSerialPort::Read()
+void ExtSerialPort::Read()
 {
     QByteArray data;
     if (isOpen())
@@ -161,7 +161,7 @@ void ThreadSerialPort::Read()
 }
 //--------------------------------------------------------------------------------
 // Пакет успешно принят
-void ThreadSerialPort::ReceivePacket() {
+void ExtSerialPort::ReceivePacket() {
     if (!_is_exchange) {
         _is_exchange = true;
         RestoreExchangeSignal(Alias);
@@ -174,7 +174,7 @@ void ThreadSerialPort::ReceivePacket() {
     _quality = (_quality > 1) ? _quality - 2 : 0;
 }
 //--------------------------------------------------------------------------------
-void ThreadSerialPort::Parse(NodeXML* node) {
+void ExtSerialPort::Parse(NodeXML* node) {
     int i;
     QString value;
     for (i = 0; i < node->Attributes.count(); i++) {
@@ -211,7 +211,7 @@ void ThreadSerialPort::Parse(NodeXML* node) {
     OutData.SetProtocol(_type_protocol);
 }
 //--------------------------------------------------------------------------------
-void ThreadSerialPort:: ParsePort(NodeXML* node)
+void ExtSerialPort:: ParsePort(NodeXML* node)
 {
     int i;
     QString value;

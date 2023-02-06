@@ -2,7 +2,7 @@
 #define DATASTORE_H
 #include <QMap>
 #include <QBitArray>
-#include "threadserialport.h"
+#include "extserialport.h"
 #include "vktoolstypes.h"
 
 class DataStore {
@@ -24,13 +24,13 @@ public:
     DataStore();
     QStringList Errors();
     // maps methods
-    void FillMaps(ThreadSerialPort*);
+    void FillMaps(ExtSerialPort*);
     QStringList OutMaps();
     bool Exist(QString, DataType);
     bool Add(QString, Parameter*);
     void Normalize(Parameter*, QByteArray);
-    void LoadSpData(ThreadSerialPort*);
-    void ClearSpData(ThreadSerialPort*);
+    void LoadSpData(ExtSerialPort*);
+    void ClearSpData(ExtSerialPort*);
     // get value
     bool Bit(QString key, int index);
     quint8 BitArrayToByte(QString key);
