@@ -27,7 +27,6 @@ public:
     explicit ExtSerialPort(QObject *parent = nullptr);
     ~ExtSerialPort();
     QString Alias;
-    bool ThreadRunning() { return _thread.isRunning(); }
     quint32 ErrorsCount() { return _errors_count; }
     bool IsExchange() { return _is_exchange; }
     bool IsBytes() { return _is_bytes; }
@@ -40,9 +39,7 @@ private:
     int _quality;               // качество связи
     quint32 _errors_count;          // количество ошибок порта
     QTimer _timer;
-    //QSerialPort *_port;
     SerialPortSettings _settings;
-    QThread _thread;
     ExchangeType _type_exchange; // тип обмена: master - ведущий, slave - ведомый, async - асинхронный
     ProtocolType _type_protocol; // тип протокола: Staffing - со стафинг-байтом
     int _delay;              // Интервал в мс между посылаемыми пакетами (для Master и Async)
@@ -65,7 +62,6 @@ signals:
 public slots:
     void Disconnect();  // Слот отключения порта
     void Start();       // Run threader? open port and start timer
-    void Process();     //Тело
 private slots:
     void HandleError(QSerialPort::SerialPortError error);//Слот обработки ощибок
     void Read(); //Слот чтения из порта по ReadyRead

@@ -23,8 +23,6 @@ ExtSerialPort::~ExtSerialPort()
 {
     if (isOpen())
         close();
-    if (_thread.isRunning())
-        _thread.quit();
     emit FinishedSignal();  //Сигнал о завершении работы
 }
 //--------------------------------------------------------------------------------
@@ -72,25 +70,14 @@ void  ExtSerialPort::Disconnect()
 //--------------------------------------------------------------------------------
 void ExtSerialPort::Start()
 {
-    moveToThread(&_thread);
-    connect(&_thread, SIGNAL(started()), this, SLOT(Process()));  //Переназначения метода run
-    connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(quit()));//Переназначение метода выход
-     //    connect(&_thread, SIGNAL(finished()), this, SLOT(deleteLater()));//Удалить к чертям поток
-     //    connect(this, SIGNAL(FinishedSignal()), &_thread, SLOT(deleteLater()));//Удалить к чертям поток
-
     if (Connect()) {
+        connect(this, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(HandleError(QSerialPort::SerialPortError))); // подключаем проверку ошибок порта
+        connect(this, SIGNAL(readyRead()), this, SLOT(Read()));//подключаем   чтение с порта по сигналу readyRead()
+        connect(&InData, SIGNAL(ReceivePacketSignal()), this, SLOT(ReceivePacket()));//подключаем  обработку по сигналу приема пакета
+
         connect(&_timer, SIGNAL(timeout()), this, SLOT(TimerStep()));
         _timer.start(TIMEOUT);
-        _thread.start();
     }
-}
-//--------------------------------------------------------------------------------
-// Выполняется при старте класса
-void ExtSerialPort::Process()
-{
-    connect(this, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(HandleError(QSerialPort::SerialPortError))); // подключаем проверку ошибок порта
-    connect(this, SIGNAL(readyRead()), this, SLOT(Read()));//подключаем   чтение с порта по сигналу readyRead()
-    connect(&InData, SIGNAL(ReceivePacketSignal()), this, SLOT(ReceivePacket()));//подключаем  обработку по сигналу приема пакета
 }
 //--------------------------------------------------------------------------------
 //проверка ошибок при работе
