@@ -35,7 +35,7 @@ typedef  union {
 } UnionInt32;
 
 typedef  union {
-    quint16 Value;
+    quint32 Value;
     char Array[4];
 } UnionUInt32;
 
