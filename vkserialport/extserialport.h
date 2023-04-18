@@ -1,6 +1,6 @@
 #ifndef EXTSERIALPORT_H
 #define EXTSERIALPORT_H
-#include <QThread>
+//#include <QThread>
 #include <QtSerialPort/QSerialPort>
 #include <QTimer>
 #include "treexml.h"
