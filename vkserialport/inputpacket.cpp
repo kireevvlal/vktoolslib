@@ -37,8 +37,10 @@ void InputPacket::Parse(NodeXML* node) {
 //--------------------------------------------------------------------------------
 void InputPacket::SetProtocol(ProtocolType protocol)
 {
-    if (protocol == ProtocolType::Staffing)
-        this->DecodeFunction = &InputPacket::DecodeStaffing;
+    switch (protocol) {
+    case ProtocolType::Staffing :  this->DecodeFunction = &InputPacket::DecodeStaffing; break;
+    case ProtocolType::Modbus : this->DecodeFunction = &InputPacket::DecodeModbus; break;
+    }
 }
 //--------------------------------------------------------------------------------
 void InputPacket::Decode(QByteArray data) //Build()
@@ -111,6 +113,73 @@ void InputPacket::DecodeStaffing(QByteArray data) {
     }
 }
 //--------------------------------------------------------------------------------
+void InputPacket::DecodeModbus(QByteArray data) {
+    uchar ch;
+    int len = data.length();
+    for (int i = 0; i < len; i++)
+                {
+                    ch = data[i];
+                    if (ch == _modbus.Device)
+                    {
+                        if ((_modbus.Index == 0) || (_modbus.Index >= _length))
+                        {
+                            _modbus.Values[0] = _modbus.Device;
+                            _modbus.Index = 1;
+                            _modbus.CRC = CRC16(ch, 0xffff);
+                            continue;
+                        }
+                    }
+                    // Not _device
+                    if (_modbus.Index == 1)
+                    {
+                        if ((ch == 0x01) || (ch == 0x03) || (ch == 0x04) || (ch == 0x05) || (ch == 0x06) || (ch == 0x10) || (ch == 0x70) || (ch == 0x71))
+                        {  // command
+                            _modbus.Values[1] = _modbus.Function = ch;
+                            _modbus.Index = 2;
+                            _modbus.CRC = CRC16(ch, _modbus.CRC);
+                        }
+                        else // not command
+                            _modbus.Index = 0;
+                        continue;
+                    }
+                    if (_modbus.Index == 2) // length
+                    {
+                        //if ((_function == 0x03) || (_function == 0x04))
+                        //    _length = ch + 5;
+                        if (ch == 0xF0) // long packet
+                            _length = _modbus.Portion * 2 + 5;
+                        else
+                            if ((_modbus.Function == 0x01) || (_modbus.Function == 0x03) || (_modbus.Function == 0x04) || (_modbus.Function == 0x70))
+                                _length = ch + 5;
+                            else
+                                _length = 8;
+                    }
+                    if (_modbus.Index == _length - 2)
+                    {
+                        _modbus.Values[_modbus.Index] = ch;
+                        _modbus.Index++;
+                        continue;
+                    }
+                    if (_modbus.Index == _length - 1)
+                    {
+                        _modbus.Index = 0;
+                        _modbus.CRC = 0;
+                        if (_modbus.CRC == _modbus.Values[_modbus.Index - 1] + (ch << 8))
+                        {
+
+                            _modbus.Command = _modbus.Values[1];
+                            ReceivePacketSignal();
+//                            DecodePacket();
+                        }
+                        continue;
+                    }
+                    _modbus.Values[_modbus.Index] = ch;
+                    _modbus.CRC = CRC16(ch, _modbus.CRC);
+                    _modbus.Index++;
+                    //break;
+                }
+}
+//--------------------------------------------------------------------------------
 ParameterList InputPacket::Parameters() {
     return _parameters;
 }
@@ -134,6 +203,13 @@ void InputPacket::Swap() {
                 }
             }
         }
+}
+//--------------------------------------------------------------------------------
+quint16 InputPacket::CRC16(uchar ch, quint16 crc) {
+    crc ^= ch;
+    for (int i = 0; i < 8; i++)
+        crc = (quint16)(((crc& 0x0001) == 1) ? ((crc >> 1) ^ 0xA001) : (crc >> 1));
+    return crc;
 }
 //--------------------------------------------------------------------------------
 //void InputPacket::Reset() {

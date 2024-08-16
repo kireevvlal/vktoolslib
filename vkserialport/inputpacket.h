@@ -25,7 +25,23 @@ typedef struct StaffingStruct {
         Checksum = 0;
         LastByte = 0;
     }
-} StaffingStruct;
+};
+
+typedef struct ModbusStruct{
+    int Index;
+    uchar Device;
+    quint16 CRC;
+    uchar Function;
+    uchar Command;
+    quint16 Portion;
+    QByteArray Values;
+    ModbusStruct() {
+        Device = Function = 1;
+        Index = 0;
+        CRC = 0;
+        Values.resize(2048);
+    }
+};
 
 //pedef struct StaffingStruct Staffing;
 
@@ -47,6 +63,7 @@ public:
 private:
     OrderType _order;
     StaffingStruct _staffing;
+    ModbusStruct _modbus;
     int _delta; // смеещение, вызванное передачей разных пакетов (в ТИ)
     ParameterList _parameters;
     QByteArray _buffer;
@@ -54,6 +71,8 @@ private:
     int _length;
     void (InputPacket::*DecodeFunction)(QByteArray);
     void DecodeStaffing(QByteArray);
+    void DecodeModbus(QByteArray);
+    quint16 CRC16(uchar, quint16);
 signals:
     void ReceivePacketSignal();
 };
