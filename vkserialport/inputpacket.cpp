@@ -40,6 +40,7 @@ void InputPacket::SetProtocol(ProtocolType protocol)
     switch (protocol) {
     case ProtocolType::Staffing :  this->DecodeFunction = &InputPacket::DecodeStaffing; break;
     case ProtocolType::Modbus : this->DecodeFunction = &InputPacket::DecodeModbus; break;
+    case ProtocolType::MO_05 : this->DecodeFunction = &InputPacket::DecodeMO_05; break;
     }
 }
 //--------------------------------------------------------------------------------
@@ -117,67 +118,107 @@ void InputPacket::DecodeModbus(QByteArray data) {
     uchar ch;
     int len = data.length();
     for (int i = 0; i < len; i++)
-                {
-                    ch = data[i];
-                    if (ch == _modbus.Device)
-                    {
-                        if ((_modbus.Index == 0) || (_modbus.Index >= _length))
-                        {
-                            _modbus.Values[0] = _modbus.Device;
-                            _modbus.Index = 1;
-                            _modbus.CRC = CRC16(ch, 0xffff);
-                            continue;
-                        }
-                    }
-                    // Not _device
-                    if (_modbus.Index == 1)
-                    {
-                        if ((ch == 0x01) || (ch == 0x03) || (ch == 0x04) || (ch == 0x05) || (ch == 0x06) || (ch == 0x10) || (ch == 0x70) || (ch == 0x71))
-                        {  // command
-                            _modbus.Values[1] = _modbus.Function = ch;
-                            _modbus.Index = 2;
-                            _modbus.CRC = CRC16(ch, _modbus.CRC);
-                        }
-                        else // not command
-                            _modbus.Index = 0;
-                        continue;
-                    }
-                    if (_modbus.Index == 2) // length
-                    {
-                        //if ((_function == 0x03) || (_function == 0x04))
-                        //    _length = ch + 5;
-                        if (ch == 0xF0) // long packet
-                            _length = _modbus.Portion * 2 + 5;
-                        else
-                            if ((_modbus.Function == 0x01) || (_modbus.Function == 0x03) || (_modbus.Function == 0x04) || (_modbus.Function == 0x70))
-                                _length = ch + 5;
-                            else
-                                _length = 8;
-                    }
-                    if (_modbus.Index == _length - 2)
-                    {
-                        _modbus.Values[_modbus.Index] = ch;
-                        _modbus.Index++;
-                        continue;
-                    }
-                    if (_modbus.Index == _length - 1)
-                    {
-                        _modbus.Index = 0;
-                        _modbus.CRC = 0;
-                        if (_modbus.CRC == _modbus.Values[_modbus.Index - 1] + (ch << 8))
-                        {
-
-                            _modbus.Command = _modbus.Values[1];
-                            ReceivePacketSignal();
-//                            DecodePacket();
-                        }
-                        continue;
-                    }
-                    _modbus.Values[_modbus.Index] = ch;
-                    _modbus.CRC = CRC16(ch, _modbus.CRC);
-                    _modbus.Index++;
-                    //break;
-                }
+    {
+        ch = data[i];
+        if (ch == _modbus.Device)
+        {
+            if ((_modbus.Index == 0) || (_modbus.Index >= _length))
+            {
+                _buffer.clear();
+                _buffer.append(_modbus.Device);
+                _modbus.Index = 1;
+                _modbus.CRC = CRC16(ch, 0xffff);
+                continue;
+            }
+        }
+        // Not _device
+        if (_modbus.Index == 1)
+        {
+            if ((ch == 0x01) || (ch == 0x03) || (ch == 0x04) || (ch == 0x05) || (ch == 0x06) || (ch == 0x10) || (ch == 0x70) || (ch == 0x71))
+            {  // command
+                _modbus.Function = ch;
+                _buffer.append(ch);
+                _modbus.Index = 2;
+                _modbus.CRC = CRC16(ch, _modbus.CRC);
+            }
+            else // not command
+                _modbus.Index = 0;
+            continue;
+        }
+        if (_modbus.Index == 2) // length
+        {
+            //if ((_function == 0x03) || (_function == 0x04))
+            //    _length = ch + 5;
+            if (ch == 0xF0) // long packet
+                _length = _modbus.Portion * 2 + 5;
+            else
+                if ((_modbus.Function == 0x01) || (_modbus.Function == 0x03) || (_modbus.Function == 0x04) || (_modbus.Function == 0x70))
+                    _length = ch + 5;
+                else
+                    _length = 8;
+        }
+        if (_modbus.Index == _length - 2)
+        {
+            _buffer.append(ch); //_modbus.Buffer[_modbus.Index] = ch;
+            _modbus.Index++;
+            continue;
+        }
+        if (_modbus.Index == _length - 1)
+        {
+            if (_modbus.CRC == (uchar)(_buffer[_modbus.Index - 1]) + (ch << 8))
+            {
+                _buffer.append(ch);
+                _modbus.Command = _buffer[1];
+                _data = _buffer;
+                ReceivePacketSignal();
+            }
+            _buffer.clear();
+            _modbus.Index = 0;
+            _modbus.CRC = 0;
+            continue;
+        }
+        _buffer.append(ch);
+        _modbus.CRC = CRC16(ch, _modbus.CRC);
+        _modbus.Index++;
+        //break;
+    }
+}
+//--------------------------------------------------------------------------------
+void InputPacket::DecodeMO_05(QByteArray data) {
+    int len = data.length();
+    _mo_05.Index += len;
+    _buffer.append(data);
+    if (!_mo_05.Version)
+    {
+        if (_mo_05.Index == 18)
+        {
+            for (int i = 0; i < 4; i++)
+                _buffer.append(data[i]);
+            _data = _buffer;
+            _buffer.clear();
+            ReceivePacketSignal();
+            _mo_05.Index = 0;
+        }
+        else
+            if (_mo_05.Index > 18)
+                _mo_05.Index = 0;
+    }
+    else
+    {
+        if (_buffer[_mo_05.Index - 1] == '\r')
+        {
+            _data.clear();
+            for (int i = 0; i < _mo_05.Index - 1; i++)
+                _data.append(_buffer[i]);
+            //_data = _buffer;
+            _buffer.clear();
+            ReceivePacketSignal();
+            _mo_05.Index = 0;
+        }
+        else
+            if (_mo_05.Index > 8)
+                _mo_05.Index = 0;
+    }
 }
 //--------------------------------------------------------------------------------
 ParameterList InputPacket::Parameters() {

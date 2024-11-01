@@ -39,7 +39,7 @@ bool ExtSerialPort::Connect()
             LogSignal(_settings.Name + " открыт!\r");
             return true;
         } else {
-//            close();
+            //            close();
             LogSignal(errorString().toLocal8Bit());
         }
     } else {
@@ -71,12 +71,14 @@ void  ExtSerialPort::Disconnect()
 void ExtSerialPort::Start()
 {
     if (Connect()) {
-        connect(this, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(HandleError(QSerialPort::SerialPortError))); // подключаем проверку ошибок порта
-        connect(this, SIGNAL(readyRead()), this, SLOT(Read()));//подключаем   чтение с порта по сигналу readyRead()
-        connect(&InData, SIGNAL(ReceivePacketSignal()), this, SLOT(ReceivePacket()));//подключаем  обработку по сигналу приема пакета
+        if (!_timer.isActive()) {
+            connect(this, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(HandleError(QSerialPort::SerialPortError))); // подключаем проверку ошибок порта
+            connect(this, SIGNAL(readyRead()), this, SLOT(Read()));//подключаем   чтение с порта по сигналу readyRead()
+            connect(&InData, SIGNAL(ReceivePacketSignal()), this, SLOT(ReceivePacket()));//подключаем  обработку по сигналу приема пакета
 
-        connect(&_timer, SIGNAL(timeout()), this, SLOT(TimerStep()));
-        _timer.start(TIMEOUT);
+            connect(&_timer, SIGNAL(timeout()), this, SLOT(TimerStep()));
+            _timer.start(TIMEOUT);
+        }
     }
 }
 //--------------------------------------------------------------------------------
@@ -105,7 +107,7 @@ void ExtSerialPort::TimerStep()
     if (_watchdog > _limit) {
         if (_is_exchange) {
             _is_exchange = false;
-//            InData.Reset();
+            //            InData.Reset();
             LostExchangeSignal(Alias);
         }
         _watchdog = _limit; //
@@ -122,7 +124,7 @@ void ExtSerialPort::TimerStep()
 void ExtSerialPort::Write()
 {
     QByteArray out = OutData.Build();
-    if (isOpen()){        
+    if (isOpen()){
         write(out);
         WriteSignal(Alias);
     }
@@ -178,7 +180,8 @@ void ExtSerialPort::Parse(NodeXML* node) {
             _limit = attr->Value.toInt();
         else if (attr->Name == "protocol") {
             value = attr->Value.toLower();
-            _type_protocol = (value == "staffing") ? ProtocolType::Staffing : ProtocolType::UndeterminedProtocol;
+            _type_protocol = (value == "staffing") ? ProtocolType::Staffing : ((value == "modbus") ? ProtocolType::Modbus :
+                                                     ((value == "mo_05") ? ProtocolType::MO_05 : ProtocolType::UndeterminedProtocol));
         }
     }
     if (node->Child != nullptr) {

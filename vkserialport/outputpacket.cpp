@@ -3,6 +3,7 @@
 OutputPacket::OutputPacket()
 {
     _order = OrderType::Direct;
+    _MO_05_version = true;
 }
 //--------------------------------------------------------------------------------
 void OutputPacket::Parse(NodeXML* node)
@@ -18,6 +19,14 @@ void OutputPacket::Parse(NodeXML* node)
 //            Data[1] = Length;
         } else if (attr->Name == "order")
             _order = (attr->Value.toLower() == "reverse") ? OrderType::Reverse : OrderType::Direct;
+        else if (attr->Name == "device")
+            _modbus.Device =  attr->Value.toInt();
+        else if (attr->Name == "function")
+            _modbus.Function =  attr->Value.toInt();
+        else if (attr->Name == "address")
+            _modbus.Address =  attr->Value.toInt();
+        else if (attr->Name == "parameter")
+            _modbus.Parameter =  attr->Value.toInt();
     }
     if (node->Child != nullptr) {
         node = node->Child;
@@ -70,10 +79,58 @@ QByteArray OutputPacket::Staffing() // Staffing byte
     return data;
 }
 //--------------------------------------------------------------------------------
-void OutputPacket::SetProtocol(ProtocolType protocol)
+QByteArray OutputPacket::Modbus() // Send modbus packet
 {
-    if (protocol == ProtocolType::Staffing)
-        this->BuildFunction = &OutputPacket::Staffing;
+    int length = 0;
+    QByteArray query;
+    quint16 CRC = 0xffff;
+    query.append(_modbus.Device);
+    query.append(_modbus.Function);
+    query.append((uchar)((_modbus.Address & 0xff00) >> 8));
+    query.append((uchar)(_modbus.Address & 0xff));
+    query.append((uchar)((_modbus.Parameter & 0xff00) >> 8));
+    query.append((uchar)(_modbus.Parameter & 0xff));
+    if ((_modbus.Function == 0x10) || (_modbus.Function == 0x71))
+    {
+        if (_modbus.Function == 0x71)
+            length = 2;
+        else
+            length = _modbus.Parameter;
+        for (int i = 0; i < length; i++)
+        {
+            query.append((uchar)((_modbus.Values[i] & 0xff00) >> 8));
+            query.append((uchar)(_modbus.Values[i] & 0xff));
+        }
+    }
+
+    // CRC
+    for (int i = 0; i < 6 + length * 2; i++)
+        CRC = CRC16(query[i], CRC);
+    query.append((uchar)(CRC & 0xff));
+    query.append((uchar)((CRC & 0xff00) >> 8));
+    return query;
+}
+//--------------------------------------------------------------------------------
+QByteArray OutputPacket::MO_05() // Send MO-05 query
+{
+    return QByteArray(_MO_05_version ? "Pdata\r" : "MO-05\r");
+}
+//--------------------------------------------------------------------------------
+void OutputPacket::SetModbusQuery(uchar function, quint16 address, quint16 parameter, quint16* values) {
+    _modbus.Function = function;
+    _modbus.Address = address;
+    _modbus.Parameter = parameter;
+    for (int i = 0; i < 16; i++)
+        if (values[i] != NULL)
+            _modbus.Values[i] = values[i];
+}
+//--------------------------------------------------------------------------------
+void OutputPacket::SetProtocol(ProtocolType protocol) {
+    switch (protocol) {
+    case ProtocolType::Staffing: this->BuildFunction = &OutputPacket::Staffing; break;
+    case ProtocolType::Modbus: this->BuildFunction = &OutputPacket::Modbus; break;
+    case ProtocolType::MO_05: this->BuildFunction = &OutputPacket::MO_05; break;
+    }
 }
 //--------------------------------------------------------------------------------
 void OutputPacket::SetData(int pos, int len, QByteArray newdata)
@@ -87,4 +144,11 @@ void OutputPacket::SetData(int pos, int len, QByteArray newdata)
 ParameterList OutputPacket::Parameters()
 {
     return _parameters;
+}
+//--------------------------------------------------------------------------------
+quint16 OutputPacket::CRC16(uchar ch, quint16 crc) {
+    crc ^= ch;
+    for (int i = 0; i < 8; i++)
+        crc = (quint16)(((crc& 0x0001) == 1) ? ((crc >> 1) ^ 0xA001) : (crc >> 1));
+    return crc;
 }

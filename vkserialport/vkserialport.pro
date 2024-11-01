@@ -35,3 +35,4 @@ unix {
 }
 !isEmpty(target.path): INSTALLS += target
 
+

@@ -25,23 +25,32 @@ typedef struct StaffingStruct {
         Checksum = 0;
         LastByte = 0;
     }
-};
+} StaffingStruct;
 
-typedef struct ModbusStruct{
+typedef struct ModbusInStruct{
     int Index;
     uchar Device;
     quint16 CRC;
     uchar Function;
     uchar Command;
     quint16 Portion;
-    QByteArray Values;
-    ModbusStruct() {
+    //QByteArray Buffer;
+    ModbusInStruct() {
         Device = Function = 1;
         Index = 0;
         CRC = 0;
-        Values.resize(2048);
+      //  Buffer.resize(2048);
     }
-};
+} ModbusInStruct;
+
+typedef struct MO_05_Struct{
+    int Index;
+    uchar Version;
+    MO_05_Struct() {
+        Index = 0;
+        Version = true;
+    }
+} MO_05_Struct;
 
 //pedef struct StaffingStruct Staffing;
 
@@ -60,10 +69,12 @@ public:
     void Decode(QByteArray);
     void Swap();
     void SetProtocol(ProtocolType);
+    void SetMO_05_Version(bool value) {_mo_05.Version = value; }
 private:
     OrderType _order;
     StaffingStruct _staffing;
-    ModbusStruct _modbus;
+    ModbusInStruct _modbus;
+    MO_05_Struct _mo_05;
     int _delta; // смеещение, вызванное передачей разных пакетов (в ТИ)
     ParameterList _parameters;
     QByteArray _buffer;
@@ -72,6 +83,7 @@ private:
     void (InputPacket::*DecodeFunction)(QByteArray);
     void DecodeStaffing(QByteArray);
     void DecodeModbus(QByteArray);
+    void DecodeMO_05(QByteArray);
     quint16 CRC16(uchar, quint16);
 signals:
     void ReceivePacketSignal();

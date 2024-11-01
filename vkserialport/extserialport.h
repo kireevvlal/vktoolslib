@@ -33,6 +33,14 @@ public:
     int Quality() { return _quality; }
     void Parse(NodeXML*);           // разбор ветви дерава XML с параметрами объекта
     void WriteSettings(QString, int, int, int, int, int);
+    void SetExchangeType(ExchangeType et) { _type_exchange = et; }
+    void SetProtocol(ProtocolType pt) { _type_protocol = pt; OutData.SetProtocol(pt); InData.SetProtocol(pt); }
+    int Delay() { return _delay; }
+    void SetDelay(int delay) { _delay = delay; }
+    int Limit() { return _limit; }
+    void SetLimit(int value) { _limit = value; }
+    QString PortName() { return _settings.Name; }
+    void SetPortName(QString name) { _settings.Name = name; }
 private:
     bool _is_exchange;          // наличие приема декодированных пакетов за заданный интервал
     bool _is_bytes;             // наличие приема данных за заданный интервал
