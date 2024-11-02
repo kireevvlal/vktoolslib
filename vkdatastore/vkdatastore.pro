@@ -16,6 +16,8 @@ HEADERS += \
     datastore.h
 
 win32:INCLUDEPATH += D:/Development/Qt/vktoolslib
+unix:INCLUDEPATH += /home/kont/develop/vktoolslib
+
 win32:LIBS+=  D:/Development/Qt/vktoolslib/vkserialport.lib
 
 # Default rules for deployment.
